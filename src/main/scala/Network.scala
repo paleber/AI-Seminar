@@ -90,7 +90,7 @@ class Network(sizes: List[Int]) {
       testData: IndexedSeq[(DenseVector[Double], Int)]
   ): Unit = {
     (0 until epochs).foreach { j =>
-      val miniBatches = Random.shuffle(trainingData).sliding(miniBatchSize)
+      val miniBatches = Random.shuffle(trainingData).grouped(miniBatchSize)
       miniBatches.foreach(miniBatch => updateMiniBatch(miniBatch, eta))
 
       if (testData.nonEmpty) {
@@ -264,9 +264,9 @@ object Start extends App {
 
   network.SGD(
     trainingData = MnistLoader.trainingData,
-    epochs = 30,
+    epochs = 100,
     miniBatchSize = 10,
-    eta = 3.0,
+    eta = 0.1,
     testData = MnistLoader.testData
   )
 
@@ -274,9 +274,8 @@ object Start extends App {
 
 object Test23 extends App {
 
-  0.to(100).foreach { _ =>
-    println(Random.nextGaussian())
-    println(DenseVector.rand(10, breeze.stats.distributions.Gaussian(0, 1)))
-  }
+
+
+  List(1,2,3,4,5,6,7,8,9, 10).grouped(3).foreach(println)
 
 }
