@@ -7,41 +7,36 @@ import breeze.linalg.DenseVector
 import breeze.stats.distributions.Gaussian
 
 
-class Network(sizes: List[Int]) {
+class Network(layers: List[Int]) {
 
-  val numLayers: Int = sizes.size
-
-  var biases: List[DenseVector[Double]] = sizes.drop(1).map(numRows =>
+  private var biases: List[DenseVector[Double]] = layers.drop(1).map(numRows =>
     DenseVector.rand(numRows, Gaussian(0, 1))
   )
 
-
-  var weights: List[DenseMatrix[Double]] = sizes.drop(1).zip(sizes.dropRight(1)).map { case (numRows, numCols) =>
+  private var weights: List[DenseMatrix[Double]] = layers.drop(1).zip(layers.dropRight(1)).map { case (numRows, numCols) =>
     DenseMatrix.rand(numRows, numCols, Gaussian(0, 1))
   }
 
-
-  def feedForward(in: DenseVector[Double]): DenseVector[Double] = {
-    biases.zip(weights).foldLeft(in) { case (a, (b, w)) =>
-      (w * a + b).map(sigmoid)
+  def feedForward(input: DenseVector[Double]): DenseVector[Double] = {
+    biases.zip(weights).foldLeft(input) { case (a, (bias, weight)) =>
+      (weight * a + bias).map(sigmoid)
     }
   }
 
+  // stochastic gradient descent (Stochastische Gradientenabstieg)
   def SGD(trainingData: IndexedSeq[(DenseVector[Double], DenseVector[Double])],
           epochs: Int,
           miniBatchSize: Int,
           eta: Double,
           testData: IndexedSeq[(DenseVector[Double], Int)]): Unit = {
 
-    0.until(epochs).foreach { j =>
+    0.until(epochs).foreach { epoch =>
       val miniBatches = Random.shuffle(trainingData).grouped(miniBatchSize)
       miniBatches.foreach(miniBatch => updateMiniBatch(miniBatch, eta))
 
-      if (testData.nonEmpty) {
-        println(s"Epoch $j: ${evaluate(testData)} / ${testData.size}")
-      } else {
-        println(s"Epoch $j complete")
-      }
+      // Evaluation
+      print(s"Epoch $epoch: ")
+      evaluate(testData)
     }
 
   }
@@ -85,7 +80,7 @@ class Network(sizes: List[Int]) {
     nablaB(nablaB.length - 1) = delta
     nablaW(nablaW.length - 1) = delta * activations(activations.length - 2).t
 
-    for (layer <- 2 until numLayers) {
+    for (layer <- 2 until layers.size) {
       val z = zs(zs.length - layer)
       val sp = z.map(sigmoidPrime)
       delta = (weights(weights.length - layer + 1).t * delta) * sp // dot vs multi = both dot?
@@ -97,13 +92,15 @@ class Network(sizes: List[Int]) {
   }
 
 
-  def evaluate(testData: IndexedSeq[(DenseVector[Double], Int)]): Int = {
-    testData.map { case (x, y) =>
+  def evaluate(testData: IndexedSeq[(DenseVector[Double], Int)]): Unit = {
+    val hits = testData.map { case (x, y) =>
       val output = feedForward(x).data
       (output.indexOf(output.max), y)
     }.count {
       case (x, y) => x == y
     }
+
+    println(s"$hits / ${testData.size} (${100.0 * hits / testData.size}%)")
   }
 
 
@@ -122,8 +119,14 @@ object Network {
 
 object Start extends App {
 
-  val network: Network = new Network(List(784, 30, 10))
+  println("Untrained net:")
+  0.until(10).foreach { _ =>
+    new Network(List(784, 30, 10)).evaluate(MnistLoader.testData)
+  }
 
+  println("\nTrain net:")
+
+  val network: Network = new Network(List(784, 30, 10))
   network.SGD(
     trainingData = MnistLoader.trainingData,
     epochs = 30,
