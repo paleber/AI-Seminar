@@ -1,4 +1,4 @@
-
+import breeze.linalg.{DenseMatrix, DenseVector}
 
 case class BasicVector(data: IndexedSeq[Double]) {
 
