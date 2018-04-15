@@ -1,3 +1,5 @@
+package algebra
+
 
 case class BasicMatrix(data: IndexedSeq[IndexedSeq[Double]]) {
 

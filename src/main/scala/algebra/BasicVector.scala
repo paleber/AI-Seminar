@@ -1,4 +1,4 @@
-import breeze.linalg.{DenseMatrix, DenseVector}
+package algebra
 
 case class BasicVector(data: IndexedSeq[Double]) {
 
@@ -21,6 +21,7 @@ object BasicVector {
   }
 
 }
+
 
 object MyApp extends App {
 
